@@ -1,0 +1,15 @@
+# ref: https://docs.travis-ci.com/user/languages/python
+language: python
+env:
+  - TOXENV=py36
+  - TOXENV=py35
+  - TOXENV=py34
+  - TOXENV=py27
+  - TOXENV=update-pep8
+  - TOXENV=coverage,codecov
+
+install:
+  - pip install tox
+
+script:
+  - tox
