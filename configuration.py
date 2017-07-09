@@ -87,7 +87,8 @@ class ConfigurationObject(object):
         # per pool. Increasing this is useful for cases when you are
         # making a lot of possibly parallel requests to the same host,
         # which is often the case here.
-        self.connection_pool_maxsize = 1
+        # When set to `None`, will default to whatever urllib3 uses
+        self.connection_pool_maxsize = None
 
     @property
     def logger_file(self):
