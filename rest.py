@@ -97,6 +97,7 @@ class RESTClientObject(object):
             'ca_certs': ca_certs,
             'cert_file': cert_file,
             'key_file': key_file,
+            'maxsize': config.connection_pool_maxsize,
         }
 
         if config.assert_hostname is not None:
