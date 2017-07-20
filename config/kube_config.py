@@ -21,6 +21,10 @@ import urllib3
 import yaml
 from google.oauth2.credentials import Credentials
 
+import google.auth
+import google.auth.transport.requests
+import requests
+
 from kubernetes.client import ApiClient, ConfigurationObject, configuration
 
 from .config_exception import ConfigException
@@ -117,12 +121,17 @@ class KubeConfigLoader(object):
         self._cluster = None
         self.set_active_context(active_context)
         self._config_base_path = config_base_path
+
+        def _refresh_credentials():
+            credentials, project_id = google.auth.default()
+            request = google.auth.transport.requests.Request()
+            credentials.refresh(request)
+            return credentials.token
+
         if get_google_credentials:
             self._get_google_credentials = get_google_credentials
         else:
-            self._get_google_credentials = lambda: (
-                GoogleCredentials.get_application_default()
-                .get_access_token().access_token)
+            self._get_google_credentials = _refresh_credentials
         self._client_configuration = client_configuration
 
     def set_active_context(self, context_name=None):
