@@ -122,13 +122,16 @@ class KubeConfigLoader(object):
         self.set_active_context(active_context)
         self._config_base_path = config_base_path
 
-        if get_google_credentials:
-            self._get_google_credentials = get_google_credentials
-        else:
+        def _refresh_credentials():
             credentials, project_id = google.auth.default()
             request = google.auth.transport.requests.Request()
             credentials.refresh(request)
-            self._get_google_credentials = lambda: (credentials.token)
+            return credentials.token
+
+        if get_google_credentials:
+            self._get_google_credentials = get_google_credentials
+        else:
+            self._get_google_credentials = _refresh_credentials
         self._client_configuration = client_configuration
 
     def set_active_context(self, context_name=None):
