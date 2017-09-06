@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Reference https://github.com/kubernetes/kubernetes/blob/5c558ddb185a7c120e147f24d69b7470bf7457e2/pkg/kubectl/cmd/drain.go # noqa
+
 from kubernetes import client
 
 KUBE_NAMESPACE = 'kube-system'
