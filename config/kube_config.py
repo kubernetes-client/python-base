@@ -19,20 +19,18 @@ import json
 import os
 import tempfile
 
-import oauthlib.oauth2
 import google.auth
 import google.auth.transport.requests
+import oauthlib.oauth2
 import urllib3
 import yaml
-
+from requests_oauthlib import OAuth2Session
 from six import PY3
 
 from kubernetes.client import ApiClient, ConfigurationObject, configuration
 
 from .config_exception import ConfigException
 from .dateutil import UTC, format_rfc3339, parse_rfc3339
-
-from requests_oauthlib import OAuth2Session
 
 EXPIRY_SKEW_PREVENTION_DELAY = datetime.timedelta(minutes=5)
 KUBE_CONFIG_DEFAULT_LOCATION = os.environ.get('KUBECONFIG', '~/.kube/config')
@@ -250,7 +248,7 @@ class KubeConfigLoader(object):
         expire = jwt_attributes.get('exp')
 
         if ((expire is not None) and
-           (_is_expired(datetime.datetime.fromtimestamp(expire)))):
+                (_is_expired(datetime.datetime.fromtimestamp(expire)))):
             self._refresh_oidc(provider)
 
         self.token = "Bearer %s" % provider['config']['id-token']
