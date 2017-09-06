@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from kubernetes import client, config
+from kubernetes import client
 
 KUBE_NAMESPACE = 'kube-system'
 
@@ -20,26 +20,23 @@ KUBE_NAMESPACE = 'kube-system'
 class Drainer(object):
 
     def __init__(self, node_name, api=None):
-        config.load_kube_config()
+        """Initialize drainer object for given node name."""
         self._node_name = node_name
         self._api = api if api is not None else client.CoreV1Api()
 
     def _get_user_pods_for_node(self):
+        """Returns list of user pods."""
         response = self._api.list_pod_for_all_namespaces()
-        # filter pods by node name.
-        pods = [p for p in response.items
-                if p.spec.node_name == self._node_name]
-        # if there is no pods that means node is not up.
-        # raise an error
-        if not pods:
-            pass
-
+        # filter pods by node name and
         # filter out all pods in kubernetes namespace.
-        # we only want to remove user pods.
-        pods = [p for p in pods if p.metadata.namespace != KUBE_NAMESPACE]
+        # we only want to return user pods.
+        pods = [p for p in response.items
+                if (p.metadata.namespace != KUBE_NAMESPACE and
+                    p.spec.node_name == self._node_name)]
         return pods
 
     def _set_unschedulable(self, unschedulable):
+        """set unschedulable attribute for current node."""
         body = {
             "spec": {
                 'unschedulable': unschedulable
@@ -50,6 +47,7 @@ class Drainer(object):
         return response
 
     def _delete_pod(self, pod, delete_options=None):
+        """Delete given pod."""
         name = pod.metadata.name
         namespace = pod.metadata.namespace
         if delete_options is None:
@@ -57,12 +55,15 @@ class Drainer(object):
         return self._api.delete_namespaced_pod(name, namespace, delete_options)
 
     def cordon(self):
+        """Cordon current node."""
         return self._set_unschedulable(True)
 
     def uncordon(self):
+        """Uncordon current node."""
         return self._set_unschedulable(False)
 
     def drain(self, delete_options=None):
+        """Drain current node."""
         self.cordon()
         pods = self._get_user_pods_for_node()
         response = []
