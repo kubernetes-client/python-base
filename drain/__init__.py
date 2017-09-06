@@ -12,5 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .drain import Drain  # noqa
-from .cordon import Cordon  # noqa
+from .drain import Drainer  # noqa
