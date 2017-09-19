@@ -58,6 +58,22 @@ TEST_PASSWORD = "pass"
 # token for me:pass
 TEST_BASIC_TOKEN = "Basic bWU6cGFzcw=="
 
+TEST_OIDC_LOGIN = (
+    "eyJhbGciOiJSUzI1NiIsImtpZCI6ImVmM2Y0NjIxODhiNjhhMzY2YjQ1MWE0YjkwY2UxYjYyY"
+    "mEyYzliNDkifQ.eyJpc3MiOiJodHRwczovL2V4YW1wbGUudXMtd2VzdC0xLmF3cy5uZXQvaWR"
+    "lbnRpdHkiLCJzdWIiOiJBQUFBQUFBQUFBQUEiLCJhdWQiOiJ0ZWN0b25pYy1rdWJlY3RsIiwi"
+    "ZXhwIjoxMDM4MjI1NjAwMCwiaWF0IjoxMDM4MjI1NjAwMCwiYXRfaGFzaCI6IlhYWFhYWF9YW"
+    "FhYWFhYIiwiZW1haWwiOiJkYW1pYW4ubXllcnNjb3VnaEBnbWFpbC5jb20iLCJlbWFpbF92ZX"
+    "JpZmllZCI6dHJ1ZSwiZ3JvdXBzIjpbInRlYW0taW5mcmEiXSwibmFtZSI6IkRhbWlhbiBNeWV"
+    "yc2NvdWdoIn0=.BZwpd0_hKYMIaYRj88QjPTrg8JFtaiyVXOqLgKkJHBVzivdzs9JjM9jvV3q"
+    "zj2DUwaeGeAZqxlbmwEXXePU-jFg70HGo7FDq4G29x516XNZWW2BaelcevFPspcIJTQ92VhYZ"
+    "vCiWp8r7SmhZ1TSss3nmuDHn3FTdasqUm22LJOqCfCDaOOf_Uq3uP0zHj4UHJAqvgMfw1j5tZ"
+    "XTYJ613vGGPkCz_K1Jnv6YIxVVnuZM3PyNNdSXQl5_GM01Zf5wJCgqMdRZ01ZrWhOda6wzlKr"
+    "h7TClbW12_vMo56aOj9HOAjhKyjcbLHjIWAWqmt3nmhwkzf8sYc9-WpscPTNalsQ"
+)
+
+TEST_OIDC_TOKEN = "Bearer %s" % TEST_OIDC_LOGIN
+
 TEST_SSL_HOST = "https://test-host"
 TEST_CERTIFICATE_AUTH = "cert-auth"
 TEST_CERTIFICATE_AUTH_BASE64 = _base64(TEST_CERTIFICATE_AUTH)
@@ -318,6 +334,13 @@ class TestKubeConfigLoader(BaseTestCase):
                 }
             },
             {
+                "name": "oidc",
+                "context": {
+                    "cluster": "default",
+                    "user": "oidc"
+                }
+            },
+            {
                 "name": "user_pass",
                 "context": {
                     "cluster": "default",
@@ -435,6 +458,17 @@ class TestKubeConfigLoader(BaseTestCase):
                 }
             },
             {
+                "name": "oidc",
+                "user": {
+                    "auth-provider": {
+                        "name": "oidc",
+                        "config": {
+                            "id-token": TEST_OIDC_LOGIN
+                        }
+                    }
+                }
+            },
+            {
                 "name": "user_pass",
                 "user": {
                     "username": TEST_USERNAME,  # should be ignored
@@ -530,6 +564,14 @@ class TestKubeConfigLoader(BaseTestCase):
         self.assertTrue(loader._load_gcp_token())
         self.assertEqual(BEARER_TOKEN_FORMAT % TEST_ANOTHER_DATA_BASE64,
                          loader.token)
+
+    def test_oidc_no_refresh(self):
+        loader = KubeConfigLoader(
+            config_dict=self.TEST_KUBE_CONFIG,
+            active_context="oidc",
+        )
+        self.assertTrue(loader._load_oid_token())
+        self.assertEqual(TEST_OIDC_TOKEN, loader.token)
 
     def test_user_pass(self):
         expected = FakeConfig(host=TEST_HOST, token=TEST_BASIC_TOKEN)
