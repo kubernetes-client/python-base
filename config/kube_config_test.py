@@ -14,11 +14,13 @@
 
 import base64
 import datetime
+import json
 import os
 import shutil
 import tempfile
 import unittest
 
+import mock
 import yaml
 from six import PY3
 
@@ -73,6 +75,47 @@ TEST_OIDC_LOGIN = (
 )
 
 TEST_OIDC_TOKEN = "Bearer %s" % TEST_OIDC_LOGIN
+
+TEST_OIDC_EXPIRED_LOGIN = (
+    "eyJhbGciOiJSUzI1NiIsImtpZCI6ImVmM2Y0NjIxODhiNjhhMzY2YjQ1MWE0YjkwY2UxYjYyY"
+    "mEyYzliNDkifQ.eyJpc3MiOiJodHRwczovL2V4YW1wbGUudXMtd2VzdC0xLmF3cy5uZXQvaWR"
+    "lbnRpdHkiLCJzdWIiOiJBQUFBQUFBQUFBQUEiLCJhdWQiOiJ0ZWN0b25pYy1rdWJlY3RsIiwi"
+    "ZXhwIjo1MzY0NTc2MDAsImlhdCI6NTM2NDU3NjAwLCJhdF9oYXNoIjoiWFhYWFhYX1hYWFhYW"
+    "FgiLCJlbWFpbCI6ImRhbWlhbi5teWVyc2NvdWdoQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaW"
+    "VkIjp0cnVlLCJncm91cHMiOlsidGVhbS1pbmZyYSJdLCJuYW1lIjoiRGFtaWFuIE15ZXJzY29"
+    "1Z2gifQ==.BZwpd0_hKYMIaYRj88QjPTrg8JFtaiyVXOqLgKkJHBVzivdzs9JjM9jvV3qzj2D"
+    "UwaeGeAZqxlbmwEXXePU-jFg70HGo7FDq4G29x516XNZWW2BaelcevFPspcIJTQ92VhYZvCiW"
+    "p8r7SmhZ1TSss3nmuDHn3FTdasqUm22LJOqCfCDaOOf_Uq3uP0zHj4UHJAqvgMfw1j5tZXTYJ"
+    "613vGGPkCz_K1Jnv6YIxVVnuZM3PyNNdSXQl5_GM01Zf5wJCgqMdRZ01ZrWhOda6wzlKrh7TC"
+    "lbW12_vMo56aOj9HOAjhKyjcbLHjIWAWqmt3nmhwkzf8sYc9-WpscPTNalsQ"
+)
+
+TEST_OIDC_CA = (
+    "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURoVENDQW0yZ0F3SUJBZ0lSQUt0elJOd"
+    "2J0M3dyVWlobVROYklheU13RFFZSktvWklodmNOQVFFTEJRQXcKWERFSk1BY0dBMVVFQmhNQU"
+    "1Ra3dCd1lEVlFRSUV3QXhDVEFIQmdOVkJBY1RBREVKTUFjR0ExVUVFUk1BTVJFdwpEd1lEVlF"
+    "RS0V3aGliMjkwYTNWaVpURUpNQWNHQTFVRUN4TUFNUkF3RGdZRFZRUURFd2RyZFdKbExXTmhN"
+    "QjRYCkRURTNNRGN4TWpJeE16TTBNVm9YRFRFNE1EY3hNakl4TXpNME1Wb3dYREVKTUFjR0ExV"
+    "UVCaE1BTVFrd0J3WUQKVlFRSUV3QXhDVEFIQmdOVkJBY1RBREVKTUFjR0ExVUVFUk1BTVJFd0"
+    "R3WURWUVFLRXdoaWIyOTBhM1ZpWlRFSgpNQWNHQTFVRUN4TUFNUkF3RGdZRFZRUURFd2RyZFd"
+    "KbExXTmhNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DCkFROEFNSUlCQ2dLQ0FRRUF1KzJn"
+    "VEtKc2NNKzgwdDlLNE9PTU1JSDhXeU1aLzZiUFBtbFU2WE0zVUhLa2tLVW0KbStkd3hraXI4e"
+    "URRQ1pTNERWam9vUXVodzJTNWY0dk80ZENncGg3Rmt6LzBZcUVNcDRzblFwQmVUVGw3ZEJLSw"
+    "pRNitFelVQdGZjaUZtemNBbUtXN292bUV5K2plSW1QQjYyMTY4WVJYcTFNaHFqZCtsVTJGaFB"
+    "SVzNXZEtHRnp0Ck1Pa2o5amRqaGd4cTNDZmRTSGk3ejdidVVYbm5WQnNuaEFCamlvOGFuK3M1"
+    "ZVBJOUVBNExJZk8zQldMZHdWejQKdThGQU91eExxSXBja2VKejNXSW5MUURXcWpFZkhUWVA2U"
+    "TlaMzA3MGxhMnVGWkNuY3pkbFh6V0haQmNuSUlscwp0VXZnVmhxbUNQRzlGLzBrWFhpYWQwUG"
+    "kvYUYzSXFOYUphOEViUUlEQVFBQm8wSXdRREFPQmdOVkhROEJBZjhFCkJBTUNBcVF3RHdZRFZ"
+    "SMFRBUUgvQkFVd0F3RUIvekFkQmdOVkhRNEVGZ1FVL1hCYlNUMWJ3VXczT1VpVHlmN2MKMzJR"
+    "Q3B4c3dEUVlKS29aSWh2Y05BUUVMQlFBRGdnRUJBSGdqelpINkx3cGF3eXlMWmVKTUZOcFdMY"
+    "Ws4RThHMApPcmlka3dESWhoWjVCQ0ZLSEdIZE82T1ZQTk1ZcWt6TzJpUzhyOFhNWjN3OExqMW"
+    "M2UVF4VzhJNG8wdDhJWDNnCkNnRTNhOXR1bjNRNC96cnVlNU5EUWp2MVMrR1V5QW12c2p5Z1N"
+    "FS3VFVXRHVkxwTlhYemlDN0lSMG41MHBpZnQKZ1JJVzFQOThUcTROYzVMaVluNTJXTnJwUnFo"
+    "WllNays5SWJiSGZZN3Y3VkY3eEJVSDJlWGFiMGViM2lCR09OUgorVTc2ZG5NRDNrbUs2dGpnU"
+    "UVCWnUwRTVVTnJZRlUvclZEYjVYb1dXYjEyMFhSYUZSWGRZV1ZreWFYQW0vc3EwCkRaUEZKTT"
+    "dvU1JZcGNKSWlYZExPamYyT1VQNzI1LzVtRDJpd3FGbTJ0V3BjMkdTbjlvWGZseGs9Ci0tLS0"
+    "tRU5EIENFUlRJRklDQVRFLS0tLS0K"
+)
 
 TEST_SSL_HOST = "https://test-host"
 TEST_CERTIFICATE_AUTH = "cert-auth"
@@ -341,6 +384,13 @@ class TestKubeConfigLoader(BaseTestCase):
                 }
             },
             {
+                "name": "expired_oidc",
+                "context": {
+                    "cluster": "default",
+                    "user": "expired_oidc"
+                }
+            },
+            {
                 "name": "user_pass",
                 "context": {
                     "cluster": "default",
@@ -469,6 +519,22 @@ class TestKubeConfigLoader(BaseTestCase):
                 }
             },
             {
+                "name": "expired_oidc",
+                "user": {
+                    "auth-provider": {
+                        "name": "oidc",
+                        "config": {
+                            "client-id": "tectonic-kubectl",
+                            "client-secret": "FAKE_SECRET",
+                            "id-token": TEST_OIDC_EXPIRED_LOGIN,
+                            "idp-certificate-authority-data": TEST_OIDC_CA,
+                            "idp-issuer-url": "https://example.org/identity",
+                            "refresh-token": "lucWJjEhlxZW01cXI3YmVlcYnpxNGhzk"
+                        }
+                    }
+                }
+            },
+            {
                 "name": "user_pass",
                 "user": {
                     "username": TEST_USERNAME,  # should be ignored
@@ -572,6 +638,30 @@ class TestKubeConfigLoader(BaseTestCase):
         )
         self.assertTrue(loader._load_oid_token())
         self.assertEqual(TEST_OIDC_TOKEN, loader.token)
+
+    @mock.patch('config.kube_config.OAuth2Session.refresh_token')
+    @mock.patch('config.kube_config.ApiClient.request')
+    def test_oidc_with_refresh(self, mock_ApiClient, mock_OAuth2Session):
+        mock_response = mock.MagicMock()
+        type(mock_response).status = mock.PropertyMock(
+            return_value=200
+        )
+        type(mock_response).data = mock.PropertyMock(
+            return_value=json.dumps({
+                "token_endpoint": "https://example.org/identity/token"
+            })
+        )
+
+        mock_ApiClient.return_value = mock_response
+
+        mock_OAuth2Session.return_value = {"id_token": "abc123"}
+
+        loader = KubeConfigLoader(
+            config_dict=self.TEST_KUBE_CONFIG,
+            active_context="expired_oidc",
+        )
+        self.assertTrue(loader._load_oid_token())
+        self.assertEqual("Bearer abc123", loader.token)
 
     def test_user_pass(self):
         expected = FakeConfig(host=TEST_HOST, token=TEST_BASIC_TOKEN)

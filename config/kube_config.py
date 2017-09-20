@@ -310,7 +310,7 @@ class KubeConfigLoader(object):
         except oauthlib.oauth2.rfc6749.errors.InvalidClientIdError:
             return
 
-        provider.value['id-token'] = refresh['id_token']
+        provider['config'].value['id-token'] = refresh['id_token']
 
     def _load_user_pass_token(self):
         if 'username' in self._user and 'password' in self._user:
