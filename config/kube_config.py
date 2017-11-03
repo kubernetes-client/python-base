@@ -49,7 +49,7 @@ def _create_temp_file_with_content(content):
     # Because we may change context several times, try to remember files we
     # created and reuse them at a small memory cost.
     content_key = str(content)
-    if content_key in _temp_files:
+    if content_key in _temp_files and os.path.isfile(_temp_files[content_key]):
         return _temp_files[content_key]
     _, name = tempfile.mkstemp()
     _temp_files[content_key] = name
