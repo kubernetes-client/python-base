@@ -171,11 +171,25 @@ class KubeConfigLoader(object):
         """
         if not self._user:
             return
+        if self._load_id_token():
+            return
         if self._load_gcp_token():
             return
         if self._load_user_token():
             return
         self._load_user_pass_token()
+
+    def _load_id_token(self):
+        if 'auth-provider' not in self._user:
+            return
+        provider = self._user['auth-provider']
+        if 'config' not in provider:
+            return
+        if not provider['config']['id-token']:
+            return
+
+        self.token = "Bearer %s" % provider['config']['id-token']
+        return self.token
 
     def _load_gcp_token(self):
         if 'auth-provider' not in self._user:
