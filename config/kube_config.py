@@ -313,12 +313,15 @@ class ConfigNode(object):
             'Expected object with name %s in %s list' % (name, self.name))
 
 
-def _get_kube_config_loader_for_yaml_file(filename, **kwargs):
-    with open(filename) as f:
-        return KubeConfigLoader(
-            config_dict=yaml.load(f),
-            config_base_path=os.path.abspath(os.path.dirname(filename)),
-            **kwargs)
+def _get_kube_config_loader(config_file=None, config_dict=None, **kwargs):
+    if config_dict:
+        return KubeConfigLoader(config_dict=config_dict, **kwargs)
+    if config_file:
+        with open(config_file) as f:
+            return KubeConfigLoader(
+                config_dict=yaml.load(f),
+                config_base_path=os.path.abspath(os.path.dirname(config_file)),
+                **kwargs)
 
 
 def list_kube_config_contexts(config_file=None):
@@ -326,17 +329,18 @@ def list_kube_config_contexts(config_file=None):
     if config_file is None:
         config_file = os.path.expanduser(KUBE_CONFIG_DEFAULT_LOCATION)
 
-    loader = _get_kube_config_loader_for_yaml_file(config_file)
+    loader = _get_kube_config_loader(config_file)
     return loader.list_contexts(), loader.current_context
 
 
-def load_kube_config(config_file=None, context=None,
+def load_kube_config(config_file=None, config_dict=None, context=None,
                      client_configuration=None,
                      persist_config=True):
     """Loads authentication and cluster information from kube-config file
     and stores them in kubernetes.client.configuration.
 
     :param config_file: Name of the kube-config file.
+    :param config_dict: kube-config dict.
     :param context: set the active context. If is set to None, current_context
         from config file will be used.
     :param client_configuration: The kubernetes.client.Configuration to
@@ -355,9 +359,9 @@ def load_kube_config(config_file=None, context=None,
                 yaml.safe_dump(config_map, f, default_flow_style=False)
         config_persister = _save_kube_config
 
-    loader = _get_kube_config_loader_for_yaml_file(
-        config_file, active_context=context,
-        config_persister=config_persister)
+    loader = _get_kube_config_loader(config_file, config_dict,
+                                     active_context=context,
+                                     config_persister=config_persister)
     if client_configuration is None:
         config = type.__call__(Configuration)
         loader.load_and_set(config)
@@ -368,13 +372,15 @@ def load_kube_config(config_file=None, context=None,
 
 def new_client_from_config(
         config_file=None,
+        config_dict=None,
         context=None,
         persist_config=True):
     """Loads configuration the same as load_kube_config but returns an ApiClient
     to be used with any API object. This will allow the caller to concurrently
     talk with multiple clusters."""
     client_config = type.__call__(Configuration)
-    load_kube_config(config_file=config_file, context=context,
+    load_kube_config(config_file=config_file, config_dict=config_dict,
+                     context=context,
                      client_configuration=client_config,
                      persist_config=persist_config)
     return ApiClient(configuration=client_config)

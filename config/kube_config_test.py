@@ -640,6 +640,15 @@ class TestKubeConfigLoader(BaseTestCase):
                          client_configuration=actual)
         self.assertEqual(expected, actual)
 
+    def test_load_kube_config_from_dict(self):
+        expected = FakeConfig(host=TEST_HOST,
+                              token=BEARER_TOKEN_FORMAT % TEST_DATA_BASE64)
+        actual = FakeConfig()
+        load_kube_config(config_dict=self.TEST_KUBE_CONFIG,
+                         context="simple_token",
+                         client_configuration=actual)
+        self.assertEqual(expected, actual)
+
     def test_list_kube_config_contexts(self):
         config_file = self._create_temp_file(yaml.dump(self.TEST_KUBE_CONFIG))
         contexts, active_context = list_kube_config_contexts(
