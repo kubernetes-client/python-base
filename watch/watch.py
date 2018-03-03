@@ -59,10 +59,12 @@ def iter_resp_lines(resp):
 
 class Watch(object):
 
-    def __init__(self, return_type=None):
+    def __init__(self, return_type=None, api_client=None):
         self._raw_return_type = return_type
         self._stop = False
-        self._api_client = client.ApiClient()
+        if api_client is None:
+            api_client = client.ApiClient()
+        self._api_client = api_client
         self.resource_version = 0
 
     def stop(self):
