@@ -34,7 +34,7 @@ SCRIPT_ROOT=`pwd`
 popd > /dev/null
 
 cd "${TMP_DIR}"
-git clone https://github.com/kubernetes-client/python.git
+git clone https://github.com/aogier/k8s-client-python.git -b feature/476-copy-example python
 cd python
 git config user.email "kubernetes-client@k8s.com"
 git config user.name "kubenetes client"

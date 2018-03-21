@@ -16,6 +16,8 @@ from . import ws_client
 def stream(func, *args, **kwargs):
     """Stream given API call using websocket"""
 
+    binary = kwargs.pop('binary', False)
+
     def _intercept_request_call(*args, **kwargs):
         # old generated code's api client has config. new ones has
         # configuration
@@ -23,6 +25,7 @@ def stream(func, *args, **kwargs):
             config = func.__self__.api_client.configuration
         except AttributeError:
             config = func.__self__.api_client.config
+        kwargs['binary'] = binary
 
         return ws_client.websocket_call(config, *args, **kwargs)
 
