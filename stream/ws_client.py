@@ -179,7 +179,10 @@ class WSClient:
             elif op_code == ABNF.OPCODE_BINARY or op_code == ABNF.OPCODE_TEXT:
                 data = frame.data
                 if len(data) > 1:
-                    channel = int(data[0])
+                    if six.PY2:
+                        channel = ord(data[0])
+                    else:
+                        channel = int(data[0])
                     data = data[1:]
                     if data:
                         if not self.binary and six.PY3:
