@@ -76,9 +76,14 @@ class InClusterConfigLoader(object):
 
         self.ssl_ca_cert = self._cert_filename
 
+        self.verify_ssl = True
+        if os.environ.get("INSECURE_SKIP_TLS_VERIFY") == "true":
+            self.verify_ssl = False
+
     def _set_config(self):
         configuration = Configuration()
         configuration.host = self.host
+        configuration.verify_ssl = self.verify_ssl
         configuration.ssl_ca_cert = self.ssl_ca_cert
         configuration.api_key['authorization'] = "bearer " + self.token
         Configuration.set_default(configuration)
