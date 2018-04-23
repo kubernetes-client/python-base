@@ -154,7 +154,7 @@ class KubeConfigLoader(object):
                 self._config.safe_get('users')):
             user = self._config['users'].get_with_name(
                 self._current_context['context']['user'], safe=True)
-            if user:
+            if user and user.safe_get('user'):
                 self._user = user['user']
             else:
                 self._user = None

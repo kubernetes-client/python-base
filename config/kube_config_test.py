@@ -415,6 +415,20 @@ class TestKubeConfigLoader(BaseTestCase):
                     "user": "non_existing_user"
                 }
             },
+            {
+                "name": "empty_user",
+                "context": {
+                    "cluster": "default",
+                    "user": "empty_user"
+                }
+            },
+            {
+                "name": "no_user_detail",
+                "context": {
+                    "cluster": "default",
+                    "user": "no_user_detail"
+                }
+            },
         ],
         "clusters": [
             {
@@ -549,6 +563,13 @@ class TestKubeConfigLoader(BaseTestCase):
                     "client-certificate-data": TEST_CLIENT_CERT_BASE64,
                     "client-key-data": TEST_CLIENT_KEY_BASE64,
                 }
+            },
+            {
+                "name": "empty_user",
+                "user": {}
+            },
+            {
+                "name": "no_user_detail",
             },
         ]
     }
@@ -798,6 +819,22 @@ class TestKubeConfigLoader(BaseTestCase):
         KubeConfigLoader(
             config_dict=self.TEST_KUBE_CONFIG,
             active_context="non_existing_user").load_and_set(actual)
+        self.assertEqual(expected, actual)
+
+    def test_empty_user(self):
+        expected = FakeConfig(host=TEST_HOST)
+        actual = FakeConfig()
+        KubeConfigLoader(
+            config_dict=self.TEST_KUBE_CONFIG,
+            active_context="empty_user").load_and_set(actual)
+        self.assertEqual(expected, actual)
+
+    def test_no_user_detail(self):
+        expected = FakeConfig(host=TEST_HOST)
+        actual = FakeConfig()
+        KubeConfigLoader(
+            config_dict=self.TEST_KUBE_CONFIG,
+            active_context="no_user_detail").load_and_set(actual)
         self.assertEqual(expected, actual)
 
 
