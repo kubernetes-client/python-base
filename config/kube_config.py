@@ -255,22 +255,24 @@ class KubeConfigLoader(object):
         return self.token
 
     def _refresh_oidc(self, provider):
-        ca_cert = tempfile.NamedTemporaryFile(delete=True)
-
-        if PY3:
-            cert = base64.b64decode(
-                provider['config']['idp-certificate-authority-data']
-            ).decode('utf-8')
-        else:
-            cert = base64.b64decode(
-                provider['config']['idp-certificate-authority-data'] + "=="
-            )
-
-        with open(ca_cert.name, 'w') as fh:
-            fh.write(cert)
-
         config = Configuration()
-        config.ssl_ca_cert = ca_cert.name
+
+        if 'idp-certificate-authority-data' in provider['config']:
+            ca_cert = tempfile.NamedTemporaryFile(delete=True)
+
+            if PY3:
+                cert = base64.b64decode(
+                    provider['config']['idp-certificate-authority-data']
+                ).decode('utf-8')
+            else:
+                cert = base64.b64decode(
+                    provider['config']['idp-certificate-authority-data'] + "=="
+                )
+
+            with open(ca_cert.name, 'w') as fh:
+                fh.write(cert)
+
+            config.ssl_ca_cert = ca_cert.name
 
         client = ApiClient(configuration=config)
 
