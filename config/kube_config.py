@@ -32,7 +32,8 @@ from kubernetes.client import ApiClient, Configuration
 from .config_exception import ConfigException
 from .dateutil import UTC, format_rfc3339, parse_rfc3339
 
-EXPIRY_SKEW_PREVENTION_DELAY = datetime.timedelta(minutes=5)
+EXPIRY_TIME_SKEW = datetime.timedelta(minutes=5)
+MINIMUM_GCP_TOKEN_TIME_REMAINING = datetime.timedelta(minutes=55)
 KUBE_CONFIG_DEFAULT_LOCATION = os.environ.get('KUBECONFIG', '~/.kube/config')
 _temp_files = {}
 
@@ -62,8 +63,16 @@ def _create_temp_file_with_content(content):
     return name
 
 
+def _is_stale(expiry):
+    return _has_min_lifespan(expiry, MINIMUM_GCP_TOKEN_TIME_REMAINING)
+
+
 def _is_expired(expiry):
-    return ((parse_rfc3339(expiry) - EXPIRY_SKEW_PREVENTION_DELAY) <=
+    return _has_min_lifespan(expiry, EXPIRY_TIME_SKEW)
+
+
+def _has_min_lifespan(expiry, min_lifespan):
+    return ((parse_rfc3339(expiry) - min_lifespan) <=
             datetime.datetime.utcnow().replace(tzinfo=UTC))
 
 
@@ -198,7 +207,7 @@ class KubeConfigLoader(object):
         if (('config' not in provider) or
                 ('access-token' not in provider['config']) or
                 ('expiry' in provider['config'] and
-                 _is_expired(provider['config']['expiry']))):
+                 _is_stale(provider['config']['expiry']))):
             # token is not available or expired, refresh it
             self._refresh_gcp_token()
 
