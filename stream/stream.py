@@ -26,9 +26,15 @@ def stream(func, *args, **kwargs):
 
         return ws_client.websocket_call(config, *args, **kwargs)
 
+    def _intercept_deserialize_call(response, response_type):
+        return response.data
+
     prev_request = func.__self__.api_client.request
+    prev_deserialize = func.__self__.api_client.deserialize
     try:
         func.__self__.api_client.request = _intercept_request_call
+        func.__self__.api_client.deserialize = _intercept_deserialize_call
         return func(*args, **kwargs)
     finally:
         func.__self__.api_client.request = prev_request
+        func.__self__.api_client.deserialize = prev_deserialize
