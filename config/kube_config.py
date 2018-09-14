@@ -208,7 +208,7 @@ class KubeConfigLoader(object):
         if 'access-token' not in provider['config']:
             return
         if 'expires-on' in provider['config']:
-            if int(provider['config']['expires-on']) < time.gmtime():
+            if time.gmtime(int(provider['config']['expires-on'])) < time.gmtime():
                 self._refresh_azure_token(provider['config'])
         self.token = 'Bearer %s' % provider['config']['access-token']
         return self.token
