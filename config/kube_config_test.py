@@ -46,6 +46,8 @@ def _base64(string):
 def _unpadded_base64(string):
     return base64.b64encode(string.encode()).decode().rstrip('=')
 
+def _unpadded_base64_urlsafe(string):
+    return base64.urlsafe_b64encode(string.encode()).decode().restrip('=')
 
 def _format_expiry_datetime(dt):
     return dt.strftime(EXPIRY_DATETIME_FORMAT)
@@ -86,7 +88,7 @@ TEST_CERTIFICATE_AUTH_BASE64 = _base64(TEST_CERTIFICATE_AUTH)
 TEST_CLIENT_KEY = "client-key"
 TEST_CLIENT_KEY_BASE64 = _base64(TEST_CLIENT_KEY)
 TEST_CLIENT_CERT = "client-cert"
-TEST_CLIENT_CERT_BASE64 = _base64(TEST_CLIENT_CERT)
+TEST_CLIENT_CERT_BASE64 = _unpadded_base64_urlsafe(TEST_CLIENT_CERT)
 
 
 TEST_OIDC_TOKEN = "test-oidc-token"
