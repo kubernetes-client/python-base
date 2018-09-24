@@ -43,6 +43,12 @@ def _base64(string):
     return base64.encodestring(string.encode()).decode()
 
 
+def _unpadded_base64(string):
+    return base64.b64encode(string.encode()).decode().rstrip('=')
+
+def _unpadded_base64_urlsafe(string):
+    return base64.urlsafe_b64encode(string.encode()).decode().rstrip('=')
+
 def _format_expiry_datetime(dt):
     return dt.strftime(EXPIRY_DATETIME_FORMAT)
 
@@ -82,16 +88,18 @@ TEST_CERTIFICATE_AUTH_BASE64 = _base64(TEST_CERTIFICATE_AUTH)
 TEST_CLIENT_KEY = "client-key"
 TEST_CLIENT_KEY_BASE64 = _base64(TEST_CLIENT_KEY)
 TEST_CLIENT_CERT = "client-cert"
-TEST_CLIENT_CERT_BASE64 = _base64(TEST_CLIENT_CERT)
+TEST_CLIENT_CERT_BASE64 = _unpadded_base64_urlsafe(TEST_CLIENT_CERT)
 
 
 TEST_OIDC_TOKEN = "test-oidc-token"
 TEST_OIDC_INFO = "{\"name\": \"test\"}"
-TEST_OIDC_BASE = _base64(TEST_OIDC_TOKEN) + "." + _base64(TEST_OIDC_INFO)
+TEST_OIDC_BASE = _unpadded_base64(
+    TEST_OIDC_TOKEN) + "." + _unpadded_base64(TEST_OIDC_INFO)
 TEST_OIDC_LOGIN = TEST_OIDC_BASE + "." + TEST_CLIENT_CERT_BASE64
 TEST_OIDC_TOKEN = "Bearer %s" % TEST_OIDC_LOGIN
 TEST_OIDC_EXP = "{\"name\": \"test\",\"exp\": 536457600}"
-TEST_OIDC_EXP_BASE = _base64(TEST_OIDC_TOKEN) + "." + _base64(TEST_OIDC_EXP)
+TEST_OIDC_EXP_BASE = _unpadded_base64(
+    TEST_OIDC_TOKEN) + "." + _unpadded_base64(TEST_OIDC_EXP)
 TEST_OIDC_EXPIRED_LOGIN = TEST_OIDC_EXP_BASE + "." + TEST_CLIENT_CERT_BASE64
 TEST_OIDC_CA = _base64(TEST_CERTIFICATE_AUTH)
 

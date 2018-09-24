@@ -260,17 +260,20 @@ class KubeConfigLoader(object):
             return
 
         parts = provider['config']['id-token'].split('.')
-
-        if len(parts) != 3:  # Not a valid JWT
+        # check for invalid JWT
+        url_chars = '=+/'
+        if len(parts) != 3 or any(x in url_chars for x in parts):
             return None
+
+        padding = (4 - len(parts[1]) % 4) * '='
 
         if PY3:
             jwt_attributes = json.loads(
-                base64.b64decode(parts[1]).decode('utf-8')
+                base64.urlsafe_b64decode(parts[1] + padding).decode('utf-8')
             )
         else:
             jwt_attributes = json.loads(
-                base64.b64decode(parts[1] + "==")
+                base64.b64decode(parts[1] + padding)
             )
 
         expire = jwt_attributes.get('exp')
