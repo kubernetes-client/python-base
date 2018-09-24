@@ -253,8 +253,9 @@ class KubeConfigLoader(object):
             return
 
         parts = provider['config']['id-token'].split('.')
-
-        if len(parts) != 3:  # Not a valid JWT
+        # check for invalid JWT
+        url_chars = '=+/'
+        if len(parts) != 3 or any(x in url_chars for x in parts):
             return None
 
         padding = (4 - len(parts[1]) % 4) * '='
