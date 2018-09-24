@@ -47,7 +47,7 @@ def _unpadded_base64(string):
     return base64.b64encode(string.encode()).decode().rstrip('=')
 
 def _unpadded_base64_urlsafe(string):
-    return base64.urlsafe_b64encode(string.encode()).decode().restrip('=')
+    return base64.urlsafe_b64encode(string.encode()).decode().rstrip('=')
 
 def _format_expiry_datetime(dt):
     return dt.strftime(EXPIRY_DATETIME_FORMAT)
