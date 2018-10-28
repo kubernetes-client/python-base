@@ -507,7 +507,11 @@ def load_kube_config(config_file=None, context=None,
     """
 
     if config_file is None:
-        config_file = os.path.expanduser(KUBE_CONFIG_DEFAULT_LOCATION)
+    
+        config_files = KUBE_CONFIG_DEFAULT_LOCATION.split(":")
+        config_file_mtimes = map(_config_last_modified_time, config_files)
+        # grab the last modified config file
+        config_file = config_files[config_file_mtime.index(max(config_file_mtimes))] 
 
     config_persister = None
     if persist_config:
