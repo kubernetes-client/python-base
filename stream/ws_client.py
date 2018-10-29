@@ -235,12 +235,13 @@ def websocket_call(configuration, *args, **kwargs):
 
     # Expand command parameter list to indivitual command params
     query_params = []
-    for key, value in kwargs.get("query_params", {}):
-        if key == 'command' and isinstance(value, list):
-            for command in value:
-                query_params.append((key, command))
-        else:
-            query_params.append((key, value))
+    for query_param in kwargs.get("query_params", {}):
+        for key, value in query_param.items():
+            if key == 'command' and isinstance(value, list):
+                for command in value:
+                    query_params.append((key, command))
+            else:
+                query_params.append((key, value))
 
     if query_params:
         url += '?' + urlencode(query_params)
