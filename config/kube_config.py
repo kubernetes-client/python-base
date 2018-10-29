@@ -20,7 +20,7 @@ import logging
 import os
 import tempfile
 import time
-
+import platform
 import adal
 import google.auth
 import google.auth.transport.requests
@@ -490,6 +490,9 @@ def list_kube_config_contexts(config_file=None):
     loader = _get_kube_config_loader_for_yaml_file(config_file)
     return loader.list_contexts(), loader.current_context
 
+def _config_last_modified_time(file):
+    stat = os.stat(file)
+    return stat.st_mtime
 
 def load_kube_config(config_file=None, context=None,
                      client_configuration=None,
@@ -507,11 +510,13 @@ def load_kube_config(config_file=None, context=None,
     """
 
     if config_file is None:
-    
-        config_files = KUBE_CONFIG_DEFAULT_LOCATION.split(":")
+        if platform.system() == "Windows":
+            config_files = KUBE_CONFIG_DEFAULT_LOCATION.split(";")
+        else:
+            config_files = KUBE_CONFIG_DEFAULT_LOCATION.split(":")
         config_file_mtimes = map(_config_last_modified_time, config_files)
         # grab the last modified config file
-        config_file = config_files[config_file_mtime.index(max(config_file_mtimes))] 
+        config_file = config_files[config_file_mtimes.index(max(config_file_mtimes))] 
 
     config_persister = None
     if persist_config:
