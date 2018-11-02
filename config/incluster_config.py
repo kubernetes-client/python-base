@@ -62,8 +62,7 @@ class InClusterConfigLoader(object):
             raise ConfigException("Service token file does not exists.")
 
         with open(self._token_filename) as f:
-            self.token = f.read()
-            if not self.token:
+            if not f.read():
                 raise ConfigException("Token file exists but empty.")
 
         if not os.path.isfile(self._cert_filename):
