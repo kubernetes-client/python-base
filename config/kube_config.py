@@ -21,7 +21,11 @@ import os
 import tempfile
 import time
 
-import adal
+try:
+    import adal
+except ImportError:
+    pass
+
 import google.auth
 import google.auth.transport.requests
 import oauthlib.oauth2
@@ -202,7 +206,13 @@ class KubeConfigLoader(object):
         if provider['name'] == 'gcp':
             return self._load_gcp_token(provider)
         if provider['name'] == 'azure':
-            return self._load_azure_token(provider)
+            try:
+                if 'adal' not in globals():
+                    raise ImportError("Package adal is not installed. Please install this package using pip install kubernetes[adal] or install adal separately.") 
+                else:
+                    return self._load_azure_token(provider)
+            except ImportError as e:
+                logging.error(str(e))
         if provider['name'] == 'oidc':
             return self._load_oid_token(provider)
 
