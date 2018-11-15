@@ -128,7 +128,14 @@ class Watch(object):
             resp = func(*args, **kwargs)
             try:
                 for line in iter_resp_lines(resp):
-                    yield self.unmarshal_event(line, return_type)
+                    evt = self.unmarshal_event(line, return_type)
+                    if evt['type'] == 'ERROR':
+                        obj = evt['raw_object']
+                        reason = "%s: %s" % (obj['reason'], obj['message'])
+                        raise client.rest.ApiException(status=obj['code'],
+                                                       reason=reason)
+                    yield evt
+
                     if self._stop:
                         break
             finally:
