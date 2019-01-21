@@ -41,7 +41,10 @@ class WSClient:
         header = []
         self._connected = False
         self._channels = {}
-        self._all = ""
+        if six.PY3:
+            self._all = b""
+        else:
+            self._all = ""
 
         # We just need to pass the Authorization, ignore all the other
         # http headers we get from the generated code
@@ -98,8 +101,11 @@ class WSClient:
         while self.is_open() and time.time() - start < timeout:
             if channel in self._channels:
                 data = self._channels[channel]
-                if "\n" in data:
-                    index = data.find("\n")
+                newline_symbol = "\n"
+                if six.PY3:
+                    newline_Symbol = b"\n"
+                if newline_symbol in data:
+                    index = data.find(newline_symbol)
                     ret = data[:index]
                     data = data[index+1:]
                     if data:
@@ -147,9 +153,15 @@ class WSClient:
         channels mapped for each input.
         """
         out = self._all
-        self._all = ""
+        if six.PY3:
+            self._all = b""
+        else:
+            self._all = ""
         self._channels = {}
-        return out
+        if six.PY3:
+            return out.decode("utf-8", "replace")
+        else:
+            return out
 
     def is_open(self):
         """True if the connection is still alive."""
@@ -175,10 +187,11 @@ class WSClient:
                 return
             elif op_code == ABNF.OPCODE_BINARY or op_code == ABNF.OPCODE_TEXT:
                 data = frame.data
-                if six.PY3:
-                    data = data.decode("utf-8")
                 if len(data) > 1:
-                    channel = ord(data[0])
+                    if six.PY3:
+                        channel = data[0]
+                    else:
+                        channel = ord(data[0])
                     data = data[1:]
                     if data:
                         if channel in [STDOUT_CHANNEL, STDERR_CHANNEL]:
