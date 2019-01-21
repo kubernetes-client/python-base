@@ -85,7 +85,11 @@ class WSClient:
         empty string otherwise."""
         self.update(timeout=timeout)
         if channel in self._channels:
+            if six.PY3:
+                return self._channels[channel].decode("utf-8", "replace")
             return self._channels[channel]
+        if six.PY3:
+            return b""
         return ""
 
     def read_channel(self, channel, timeout=0):
@@ -96,6 +100,8 @@ class WSClient:
             ret = self._channels[channel]
         if channel in self._channels:
             del self._channels[channel]
+        if six.PY3 and isinstance(ret, bytes):
+            return ret.decode("utf-8", "replace")
         return ret
 
     def readline_channel(self, channel, timeout=None):
@@ -117,7 +123,10 @@ class WSClient:
                         self._channels[channel] = data
                     else:
                         del self._channels[channel]
-                    return ret
+                    if six.PY3 and isinstance(ret, bytes):
+                        return ret.decode("utf-8", "replace")
+                    else:
+                        return ret
             self.update(timeout=(timeout - time.time() + start))
 
     def write_channel(self, channel, data):
