@@ -41,10 +41,9 @@ class WSClient:
         header = []
         self._connected = False
         self._channels = {}
+        self._all = ""
         if six.PY3:
             self._all = b""
-        else:
-            self._all = ""
 
         # We just need to pass the Authorization, ignore all the other
         # http headers we get from the generated code
@@ -109,7 +108,7 @@ class WSClient:
                 data = self._channels[channel]
                 newline_symbol = "\n"
                 if six.PY3:
-                    newline_Symbol = b"\n"
+                    newline_symbol = b"\n"
                 if newline_symbol in data:
                     index = data.find(newline_symbol)
                     ret = data[:index]
