@@ -44,7 +44,7 @@ def iter_resp_lines(resp):
     prev = ""
     for seg in resp.read_chunked(decode_content=False):
         if isinstance(seg, bytes):
-            seg = seg.decode('utf8')
+            seg = seg.decode('utf8', 'replace')
         seg = prev + seg
         lines = seg.split("\n")
         if not seg.endswith("\n"):
