@@ -42,19 +42,26 @@ def _find_return_type(func):
 
 def iter_resp_lines(resp):
     prev = ""
+    newline_symbol = "\n"
+    if six.PY3:
+        prev = b""
+        newline_symbol = b"\n"
     for seg in resp.read_chunked(decode_content=False):
-        if isinstance(seg, bytes):
-            seg = seg.decode('utf8', 'replace')
         seg = prev + seg
-        lines = seg.split("\n")
-        if not seg.endswith("\n"):
+        lines = seg.split(newline_symbol)
+        if not seg.endswith(newline_symbol):
             prev = lines[-1]
             lines = lines[:-1]
         else:
             prev = ""
+            if six.PY3:
+                prev = b""
         for line in lines:
             if line:
-                yield line
+                if isinstance(line, bytes):
+                    yield line.decode('utf8', 'replace')
+                else:
+                    yield line
 
 
 class Watch(object):
