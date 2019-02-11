@@ -41,9 +41,11 @@ class WSClient:
         header = []
         self._connected = False
         self._channels = {}
+        self._channels_opcodes = {}
         self._all = ""
         if six.PY3:
             self._all = b""
+        self._all_contains_binary = False
 
         # We just need to pass the Authorization, ignore all the other
         # http headers we get from the generated code
@@ -73,13 +75,16 @@ class WSClient:
         self.sock = WebSocket(sslopt=ssl_opts, skip_utf8_validation=False)
         self.sock.connect(url, header=header)
         self._connected = True
+        
+    def __channel_is_text(self, channel):
+        return self._channels_opcodes.get(channel, ABNF.OPCODE_TEXT) == ABNF.OPCODE_TEXT
 
     def peek_channel(self, channel, timeout=0):
         """Peek a channel and return part of the input,
         empty string otherwise."""
         self.update(timeout=timeout)
         if channel in self._channels:
-            if six.PY3:
+            if six.PY3 and self.__channel_is_text(channel):
                 return self._channels[channel].decode("utf-8", "replace")
             return self._channels[channel]
         if six.PY3:
@@ -94,7 +99,7 @@ class WSClient:
             ret = self._channels[channel]
         if channel in self._channels:
             del self._channels[channel]
-        if six.PY3 and isinstance(ret, bytes):
+        if six.PY3 and isinstance(ret, bytes) and self.__channel_is_text(channel):
             return ret.decode("utf-8", "replace")
         return ret
 
@@ -166,7 +171,7 @@ class WSClient:
         else:
             self._all = ""
         self._channels = {}
-        if six.PY3:
+        if six.PY3 and not self._all_contains_binary:
             return out.decode("utf-8", "replace")
         else:
             return out
@@ -206,7 +211,10 @@ class WSClient:
                             # keeping all messages in the order they received for
                             # non-blocking call.
                             self._all += data
+                            if not self._all_contains_binary:
+                                self._all_contains_binary = (op_code == ABNF.OPCODE_BINARY)
                         if channel not in self._channels:
+                            self._channels_opcodes[channel] = op_code
                             self._channels[channel] = data
                         else:
                             self._channels[channel] += data
