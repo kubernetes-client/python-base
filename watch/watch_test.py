@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import six
 import unittest
 
 from mock import Mock
@@ -35,6 +36,17 @@ class WatchTests(unittest.TestCase):
                 '{"type": "ADDED", "object": {"metadata": {"name": "test3",'
                 '"resourceVersion": "3"}, "spec": {}, "status": {}}}\n',
                 'should_not_happened\n'])
+        if six.PY3:
+            fake_resp.read_chunked = Mock(
+                return_value=[
+                    b'{"type": "ADDED", "object": {"metadata": {"name": "test1",'
+                    b'"resourceVersion": "1"}, "spec": {}, "status": {}}}\n',
+                    b'{"type": "ADDED", "object": {"metadata": {"name": "test2",'
+                    b'"resourceVersion": "2"}, "spec": {}, "sta',
+                    b'tus": {}}}\n'
+                    b'{"type": "ADDED", "object": {"metadata": {"name": "test3",'
+                    b'"resourceVersion": "3"}, "spec": {}, "status": {}}}\n',
+                    b'should_not_happened\n'])
 
         fake_api = Mock()
         fake_api.get_namespaces = Mock(return_value=fake_resp)
@@ -70,6 +82,9 @@ class WatchTests(unittest.TestCase):
             fake_resp.release_conn = Mock()
             fake_resp.read_chunked = Mock(
                 return_value=['{"type": "ADDED", "object": 1}\n'] * 4)
+            if six.PY3:
+                fake_resp.read_chunked = Mock(
+                    return_value=[b'{"type": "ADDED", "object": 1}\n'] * 4)
 
             fake_api = Mock()
             fake_api.get_namespaces = Mock(return_value=fake_resp)
@@ -97,6 +112,9 @@ class WatchTests(unittest.TestCase):
         fake_resp.release_conn = Mock()
         fake_resp.read_chunked = Mock(
             return_value=['{"type": "ADDED", "object": 1}\n'])
+        if six.PY3:
+            fake_resp.read_chunked = Mock(
+                return_value=[b'{"type": "ADDED", "object": 1}\n'])
 
         fake_api = Mock()
         fake_api.get_namespaces = Mock(return_value=fake_resp)
