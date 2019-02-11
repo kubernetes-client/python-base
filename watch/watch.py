@@ -14,6 +14,7 @@
 
 import json
 import pydoc
+import six
 
 from kubernetes import client
 
