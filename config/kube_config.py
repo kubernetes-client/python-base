@@ -332,7 +332,7 @@ class KubeConfigLoader(object):
         response = client.request(
             method="GET",
             url="%s/.well-known/openid-configuration"
-            % provider['config']['idp-issuer-url']
+            % provider['config']['idp-issuer-url'].rstrip('/')
         )
 
         if response.status != 200:
