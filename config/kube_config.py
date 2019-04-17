@@ -228,10 +228,12 @@ class KubeConfigLoader(object):
             return
         if 'expires-on' in provider['config']:
             try:
-                 if time.gmtime(int(provider['config']['expires-on'])) < time.gmtime():
+                if time.gmtime(int(provider['config']['expires-on'])) < time.gmtime():
                     self._refresh_azure_token(provider['config'])
             except ValueError:  # sometimes expires-on is not an int, but a datestring
-                if time.strptime(provider['config']['expires-on'], '%Y-%m-%d %H:%M:%S.%f') < time.gmtime():
+                parsed_time = time.strptime(
+                    provider['config']['expires-on'], '%Y-%m-%d %H:%M:%S.%f')
+                if parsed_time < time.gmtime():
                     self._refresh_azure_token(provider['config'])
         self.token = 'Bearer %s' % provider['config']['access-token']
         return self.token

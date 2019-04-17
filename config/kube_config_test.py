@@ -1117,7 +1117,8 @@ class TestKubeConfigMerger(BaseTestCase):
             {'context': {'cluster': 'ssl', 'user': 'ssl'}, 'name': 'ssl'},
             {'context': {'cluster': 'default', 'user': 'simple_token'},
              'name': 'simple_token'},
-            {'context': {'cluster': 'default', 'user': 'expired_oidc'}, 'name': 'expired_oidc'}]
+            {'context': {'cluster': 'default', 'user': 'expired_oidc'},
+             'name': 'expired_oidc'}]
 
         contexts, active_context = list_kube_config_contexts(
             config_file=kubeconfigs)
