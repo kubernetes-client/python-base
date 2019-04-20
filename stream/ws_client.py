@@ -24,6 +24,7 @@ from websocket import WebSocket, ABNF, enableTrace
 import six
 import ssl
 from six.moves.urllib.parse import urlencode, quote_plus, urlparse, urlunparse
+import chardet
 
 STDIN_CHANNEL = 0
 STDOUT_CHANNEL = 1
@@ -181,7 +182,8 @@ class WSClient:
             elif op_code == ABNF.OPCODE_BINARY or op_code == ABNF.OPCODE_TEXT:
                 data = frame.data
                 if six.PY3:
-                    data = data.decode("utf-8")
+                    encode = chardet.detect(data).get('encoding')
+                    data = data.decode(encode or "utf-8")
                 if len(data) > 1:
                     channel = ord(data[0])
                     data = data[1:]
