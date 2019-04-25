@@ -164,6 +164,43 @@ class WatchTests(unittest.TestCase):
         # more strict test with worse error message
         self.assertEqual(fake_api.get_namespaces.mock_calls, calls)
 
+    def test_watch_resource_version_grows_monotonically(self):
+        # https://github.com/kubernetes-client/python/issues/700
+        # ensure that the resource version never decrements,
+        # especially on the first listing of the resources
+        # (as they go in arbitrary order, not sorted).
+        fake_resp = Mock()
+        fake_resp.close = Mock()
+        fake_resp.release_conn = Mock()
+        fake_resp.read_chunked = Mock(
+            return_value=[
+                '{"type": "ADDED", "object": {"metadata": {"name": "test1",'
+                '"resourceVersion": "1"}, "spec": {}, "status": {}}}\n',
+                '{"type": "ADDED", "object": {"metadata": {"name": "test2",'
+                '"resourceVersion": "3"}, "spec": {}, "status": {}}}\n'
+                '{"type": "ADDED", "object": {"metadata": {"name": "test3",'
+                '"resourceVersion": "2"}, "spec": {}, "status": {}}}\n',
+                'should_not_happened\n'])
+
+        fake_api = Mock()
+        fake_api.get_namespaces = Mock(return_value=fake_resp)
+        fake_api.get_namespaces.__doc__ = ':return: V1NamespaceList'
+
+        w = Watch()
+        watch_resource_versions = []
+        event_resource_versions = []
+        count = 1
+        for e in w.stream(fake_api.get_namespaces):
+            obj = e['object']
+            watch_resource_versions.append(w.resource_version)
+            event_resource_versions.append(obj.metadata.resource_version)
+            count += 1
+            if count == 4:
+                w.stop()
+
+        self.assertEqual(watch_resource_versions, ['1', '3', '3'])
+        self.assertEqual(event_resource_versions, ['1', '3', '2'])
+
     def test_watch_stream_twice(self):
         w = Watch(float)
         for step in ['first', 'second']:

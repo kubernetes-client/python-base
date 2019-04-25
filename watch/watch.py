@@ -95,13 +95,22 @@ class Watch(object):
             obj = SimpleNamespace(data=json.dumps(js['raw_object']))
             js['object'] = self._api_client.deserialize(obj, return_type)
             if hasattr(js['object'], 'metadata'):
-                self.resource_version = js['object'].metadata.resource_version
+                resource_version = js['object'].metadata.resource_version
             # For custom objects that we don't have model defined, json
             # deserialization results in dictionary
             elif (isinstance(js['object'], dict) and 'metadata' in js['object']
                   and 'resourceVersion' in js['object']['metadata']):
-                self.resource_version = js['object']['metadata'][
-                    'resourceVersion']
+                resource_version = js['object']['metadata']['resourceVersion']
+            else:
+                resource_version = None
+
+            # Resource version must never revert to old objects, especially
+            # on the first listing call (the objects are sorted randomly).
+            if (resource_version is not None and
+                    (self.resource_version is None or
+                     self.resource_version < resource_version)):
+                self.resource_version = resource_version
+
         return js
 
     def stream(self, func, *args, **kwargs):
