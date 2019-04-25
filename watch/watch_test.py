@@ -152,7 +152,7 @@ class WatchTests(unittest.TestCase):
             # opaque value we cannot interpret it and order it so rely
             # on k8s returning the events completely and in order
             calls.append(call(_preload_content=False, watch=True,
-                              resource_version="3"))
+                              resource_version="5"))
 
         for c, e in enumerate(w.stream(fake_api.get_namespaces,
                                        resource_version="5")):
