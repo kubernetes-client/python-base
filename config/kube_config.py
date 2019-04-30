@@ -282,9 +282,11 @@ class KubeConfigLoader(object):
         if len(parts) != 3:  # Not a valid JWT
             return None
 
+        # Adding == to ensure sufficient padding. Extra padding is ignored
+        # by Python
         if PY3:
             jwt_attributes = json.loads(
-                base64.b64decode(parts[1]).decode('utf-8')
+                base64.b64decode(parts[1] + "==").decode('utf-8')
             )
         else:
             jwt_attributes = json.loads(
@@ -311,9 +313,11 @@ class KubeConfigLoader(object):
         if 'idp-certificate-authority-data' in provider['config']:
             ca_cert = tempfile.NamedTemporaryFile(delete=True)
 
+            # Adding == to ensure sufficient padding. Extra padding is ignored
+            # by Python
             if PY3:
                 cert = base64.b64decode(
-                    provider['config']['idp-certificate-authority-data']
+                    provider['config']['idp-certificate-authority-data'] + "=="
                 ).decode('utf-8')
             else:
                 cert = base64.b64decode(
