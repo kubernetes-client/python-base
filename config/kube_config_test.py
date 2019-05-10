@@ -20,6 +20,7 @@ import json
 import os
 import shutil
 import tempfile
+import time
 import unittest
 
 import mock
@@ -1151,6 +1152,62 @@ class TestKubeConfigMerger(BaseTestCase):
 
         # new token
         self.assertEqual(provider.value['id-token'], "token-changed")
+
+    @mock.patch('time')
+    def test___load_azure_token(self, mock_time):
+        class TestKubeConfigLoader(KubeConfigLoader):
+            def __init__(self):
+                self.refresh_called = 0
+
+            def _refresh_azure_token(self, param_1):
+                self.refresh_called += 1
+
+        time.gmtime = mock.Mock(return_value=time.struct_time(
+            tm_year=2019, tm_mon=5, tm_mday=10, tm_hour=14, tm_min=47, tm_sec=31, tm_wday=4, tm_yday=130, tm_isdst=0))
+
+        fake_provider_expires_on_int_old = {
+            "config": "dummy",
+            "access-token": "dummy",
+            "expires-on": 1555503941  # 17 April 2019
+        }
+
+        fake_provider_expires_on_int_new = {
+            "config": "dummy",
+            "access-token": "dummy",
+            "expires-on": 1585555941  # 30 March 2020
+        }
+
+        fake_provider_expires_on_datestring_old = {
+            "config": "dummy",
+            "access-token": "dummy",
+            "expires-on": "2018-02-03 14:56:48.999"
+        }
+
+        fake_provider_expires_on_datestring_new = {
+            "config": "dummy",
+            "access-token": "dummy",
+            "expires-on": "2021-02-03 14:56:48.999"
+        }
+
+        test_kube_config_loader = TestKubeConfigLoader()
+        test_kube_config_loader._load_azure_token(
+            fake_provider_expires_on_int_old)
+        self.assertEqual(test_kube_config_loader.refresh_called, 0)
+
+        test_kube_config_loader = TestKubeConfigLoader()
+        test_kube_config_loader._load_azure_token(
+            fake_provider_expires_on_datestring_old)
+        self.assertEqual(test_kube_config_loader.refresh_called, 0)
+
+        test_kube_config_loader = TestKubeConfigLoader()
+        test_kube_config_loader._load_azure_token(
+            fake_provider_expires_on_int_new)
+        self.assertEqual(test_kube_config_loader.refresh_called, 1)
+
+        test_kube_config_loader = TestKubeConfigLoader()
+        test_kube_config_loader._load_azure_token(
+            fake_provider_expires_on_datestring_new)
+        self.assertEqual(test_kube_config_loader.refresh_called, 1)
 
 
 if __name__ == '__main__':
