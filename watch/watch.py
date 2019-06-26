@@ -45,10 +45,27 @@ def _find_return_type(func):
 
 def iter_resp_lines(resp):
     prev = ""
-    for seg in resp.read_chunked(decode_content=False):
+    # Check if it is possible to read a chunked
+    # response, if not, use the standard read.
+    try:
+        resp = resp.read_chunked(decode_content=False)
+        for seg in resp:
+            if isinstance(seg, bytes):
+                seg = seg.decode('utf8')
+            seg = prev + seg
+            lines = seg.split("\n")
+            if not seg.endswith("\n"):
+                prev = lines[-1]
+                lines = lines[:-1]
+            else:
+                prev = ""
+            for line in lines:
+                if line:
+                    yield line
+    except AttributeError:
+        seg = resp.read()
         if isinstance(seg, bytes):
             seg = seg.decode('utf8')
-        seg = prev + seg
         lines = seg.split("\n")
         if not seg.endswith("\n"):
             prev = lines[-1]
