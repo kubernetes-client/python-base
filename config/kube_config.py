@@ -361,13 +361,14 @@ class KubeConfigLoader(object):
             return
 
         response = json.loads(response.data)
+        client_secret = provider['config'].safe_get('client-secret')
 
         request = OAuth2Session(
             client_id=provider['config']['client-id'],
             token=provider['config']['refresh-token'],
             auto_refresh_kwargs={
                 'client_id': provider['config']['client-id'],
-                'client_secret': provider['config']['client-secret']
+                'client_secret': client_secret
             },
             auto_refresh_url=response['token_endpoint']
         )
@@ -377,7 +378,7 @@ class KubeConfigLoader(object):
                 token_url=response['token_endpoint'],
                 refresh_token=provider['config']['refresh-token'],
                 auth=(provider['config']['client-id'],
-                      provider['config']['client-secret']),
+                      client_secret),
                 verify=config.ssl_ca_cert if config.verify_ssl else None
             )
         except oauthlib.oauth2.rfc6749.errors.InvalidClientIdError:
