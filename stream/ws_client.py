@@ -100,7 +100,10 @@ class WSClient:
         if timeout is None:
             timeout = float("inf")
         start = time.time()
-        while self.is_open() and time.time() - start < timeout:
+        while self.is_open():
+            remain = timeout - (time.time() - start)
+            if remain < 0:
+                return
             if channel in self._channels:
                 data = self._channels[channel]
                 if "\n" in data:
@@ -200,11 +203,14 @@ class WSClient:
         received during this time."""
         if timeout:
             start = time.time()
-            while self.is_open() and time.time() - start < timeout:
-                self.update(timeout=(timeout - time.time() + start))
+            while self.is_open():
+                remain = timeout - (time.time() - start)
+                if remain < 0:
+                    return
+                self.update(timeout=remain)
         else:
             while self.is_open():
-                self.update(timeout=None)
+                self.update()
 
     def close(self, **kwargs):
         """
