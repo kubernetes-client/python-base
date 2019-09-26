@@ -59,7 +59,7 @@ class InClusterConfigLoader(object):
                                          self._environ[SERVICE_PORT_ENV_NAME]))
 
         if not os.path.isfile(self._token_filename):
-            raise ConfigException("Service token file does not exists.")
+            raise ConfigException("Service token file does not exist.")
 
         with open(self._token_filename) as f:
             self.token = f.read()
@@ -68,7 +68,7 @@ class InClusterConfigLoader(object):
 
         if not os.path.isfile(self._cert_filename):
             raise ConfigException(
-                "Service certification file does not exists.")
+                "Service certification file does not exist.")
 
         with open(self._cert_filename) as f:
             if not f.read():
