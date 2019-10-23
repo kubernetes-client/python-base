@@ -250,6 +250,24 @@ class WatchTests(unittest.TestCase):
         self.assertEqual("1", event['object']['metadata']['resourceVersion'])
         self.assertEqual("1", w.resource_version)
 
+    # ref: gh-982
+    def test_unmarshal_with_object_literal(self):
+        from json import dumps
+        w = Watch()
+        simple_object = {'hello': 'world', 'object': {}}
+        object_literal = dumps(simple_object)
+        event = w.unmarshal_event(object_literal, 'str')
+        self.assertTrue(isinstance(event, str))
+        self.assertEqual(object_literal, event)
+
+    # ref: gh-983
+    def test_unmarshal_with_int_literal(self):
+        w = Watch()
+        int_literal = '1145141919'
+        event = w.unmarshal_event(int_literal, 'str')
+        self.assertTrue(isinstance(event, str))
+        self.assertEqual(int_literal, event)
+
     def test_watch_with_exception(self):
         fake_resp = Mock()
         fake_resp.close = Mock()
