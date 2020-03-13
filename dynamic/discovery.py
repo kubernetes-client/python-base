@@ -40,12 +40,48 @@ class Discoverer(object):
 
     def __init__(self, client, cache_file):
         self.client = client
-        default_cache_id = self.client.configuration.host
-        if six.PY3:
-            default_cache_id = default_cache_id.encode('utf-8')
-        default_cachefile_name = 'osrcp-{0}.json'.format(hashlib.md5(default_cache_id).hexdigest())
-        self.__cache_file = cache_file or os.path.join(tempfile.gettempdir(), default_cachefile_name)
+        default_cachefile_name = 'kcp-{0}.json'.format(
+            hashlib.sha1(self.__get_default_cache_id()).hexdigest())
+        self.__cache_file = cache_file or os.path.join(
+            tempfile.gettempdir(), default_cachefile_name)
         self.__init_cache()
+
+    def __get_default_cache_id(self):
+        """Attempts to create a cache_id that takes the user's name and the targeted
+            host into account, to prevent collisions across users and clusters
+        """
+        user = self.__get_user()
+        if user:
+            cache_id = "{0}-{1}".format(self.client.configuration.host, user)
+        else:
+            cache_id = self.client.configuration.host
+
+        if six.PY3:
+            return cache_id.encode('utf-8')
+
+        return cache_id
+
+    def __get_user(self):
+        """Attempts to get an identifier for the current user in a cross-platform way
+        """
+        if hasattr(os, 'getlogin'):
+            try:
+                user = os.getlogin()
+                if user:
+                    return str(user)
+            except OSError:
+                pass
+        if hasattr(os, 'getuid'):
+            try:
+                user = os.getuid()
+                if user:
+                    return str(user)
+            except OSError:
+                pass
+        user = os.environ.get("USERNAME")
+        if user:
+            return str(user)
+        return None
 
     def __init_cache(self, refresh=False):
         if refresh or not os.path.exists(self.__cache_file):
