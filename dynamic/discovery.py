@@ -181,7 +181,20 @@ class Discoverer(object):
             )
             resources[resource['kind']].append(resourceobj)
 
-            resource_list = ResourceList(self.client, group=group, api_version=version, base_kind=resource['kind'])
+            resource_lookup = {
+                'prefix': prefix,
+                'group': group,
+                'api_version': version,
+                'kind': resourceobj.kind,
+                'name': resourceobj.name
+            }
+            resource_list = ResourceList(
+                self.client,
+                group=group,
+                api_version=version,
+                base_kind=resource['kind'],
+                base_resource_lookup=resource_lookup)
+
             resources[resource_list.kind].append(resource_list)
         return resources
 
