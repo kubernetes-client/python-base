@@ -131,6 +131,29 @@ class WSClient:
                     return ret
             self.update(timeout=(timeout - time.time() + start))
 
+    def readline_any(self, channels=[STDOUT_CHANNEL, STDERR_CHANNEL], timeout=None):
+        """Read a line from any output channel."""
+        if timeout is None:
+            timeout = float("inf")
+        start = time.time()
+        while self.is_open() and time.time() - start < timeout:
+            for channel in channels:
+                if channel in self._channels:
+                    data = self._channels[channel]
+                    if not data:
+                        continue
+                    if "\n" in data:
+                        index = data.find("\n")
+                        ret = {"channel": channel, data: data[:index]}
+                        data = data[index+1:]
+                        if data:
+                            self._channels[channel] = data
+                        else:
+                            del self._channels[channel]
+                        return ret
+            self.update(timeout=(timeout - time.time() + start))
+
+
     def write_channel(self, channel, data):
         """Write data to a channel."""
         # check if we're writing binary data or not
