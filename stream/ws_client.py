@@ -55,6 +55,7 @@ class WSClient:
         header = []
         self._connected = False
         self._channels = {}
+        self._ordered_all = []
         if capture_all:
             self._all = StringIO()
         else:
@@ -131,27 +132,55 @@ class WSClient:
                     return ret
             self.update(timeout=(timeout - time.time() + start))
 
-    def readline_any(self, channels=[STDOUT_CHANNEL, STDERR_CHANNEL], timeout=None):
+    def readline_any(self, timeout=None):
         """Read a line from any output channel."""
+        import logging
+        from datetime import datetime
+        logging.basicConfig(level=logging.INFO)
+        logger = logging.getLogger('kubernetes.client.rest')
         if timeout is None:
             timeout = float("inf")
         start = time.time()
+        chunks = {STDOUT_CHANNEL : "", STDERR_CHANNEL : ""}
+
         while self.is_open() and time.time() - start < timeout:
-            for channel in channels:
-                if channel in self._channels:
-                    data = self._channels[channel]
-                    if not data:
-                        continue
-                    if "\n" in data:
-                        index = data.find("\n")
-                        ret = {"channel": channel, "data": data[:index]}
-                        data = data[index+1:]
-                        if data:
-                            self._channels[channel] = data
-                        else:
-                            del self._channels[channel]
+            for position, entry in enumerate(self._ordered_all):
+                index = entry["data"].find("\n")
+                if index == -1:
+                    chunks[entry["channel"]] += entry["data"]
+                    del self._ordered_all[position]
+                else:
+                    chunks[entry["channel"]] += entry["data"][:index]
+                    ret = {"channel": entry["channel"], "data": chunks[entry["channel"]]}
+                    entry["data"] = entry["data"][index+1:]
+                    if not entry["data"]:
+                        del self._ordered_all[position]
+                    if ret["data"]:
+                        chunks[entry["channel"]] = ""
                         return ret
             self.update(timeout=(timeout - time.time() + start))
+
+    # def readline_any(self, channels=[STDOUT_CHANNEL, STDERR_CHANNEL], timeout=None):
+    #     """Read a line from any output channel."""
+    #     if timeout is None:
+    #         timeout = float("inf")
+    #     start = time.time()
+    #     while self.is_open() and time.time() - start < timeout:
+    #         for channel in channels:
+    #             if channel in self._channels:
+    #                 data = self._channels[channel]
+    #                 if not data:
+    #                     continue
+    #                 if "\n" in data:
+    #                     index = data.find("\n")
+    #                     ret = {"channel": channel, "data": data[:index]}
+    #                     data = data[index+1:]
+    #                     if data:
+    #                         self._channels[channel] = data
+    #                     else:
+    #                         del self._channels[channel]
+    #                     return ret
+    #         self.update(timeout=(timeout - time.time() + start))
 
 
     def write_channel(self, channel, data):
@@ -239,6 +268,7 @@ class WSClient:
                             # keeping all messages in the order they received
                             # for non-blocking call.
                             self._all.write(data)
+                            self._ordered_all.append({"channel": channel, "data": data})
                         if channel not in self._channels:
                             self._channels[channel] = data
                         else:
