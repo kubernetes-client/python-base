@@ -144,7 +144,7 @@ class WSClient:
                         continue
                     if "\n" in data:
                         index = data.find("\n")
-                        ret = {"channel": channel, data: data[:index]}
+                        ret = {"channel": channel, "data": data[:index]}
                         data = data[index+1:]
                         if data:
                             self._channels[channel] = data
