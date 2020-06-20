@@ -97,6 +97,10 @@ class Watch(object):
                   and 'resourceVersion' in js['object']['metadata']):
                 self.resource_version = js['object']['metadata'][
                     'resourceVersion']
+            if self.resource_version is None:
+                # In some case like 'too old resource version',
+                # the event type would be ERROR, resource version will be None
+                self.resource_version = 0
         return js
 
     def stream(self, func, *args, **kwargs):
