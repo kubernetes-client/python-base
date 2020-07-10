@@ -1399,11 +1399,13 @@ class TestKubernetesClientConfiguration(BaseTestCase):
 
     def test_auth_settings_calls_get_api_key_with_prefix(self):
         expected_token = 'expected_token'
+        api_key = {'authorization': 'expected_token'}
 
         def fake_get_api_key_with_prefix(identifier):
             self.assertEqual('authorization', identifier)
             return expected_token
-        config = Configuration()
+
+        config = Configuration(api_key=api_key)
         config.get_api_key_with_prefix = fake_get_api_key_with_prefix
         self.assertEqual(expected_token,
                          config.auth_settings()['BearerToken']['value'])
