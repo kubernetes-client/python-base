@@ -12,21 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from kubernetes.client.rest import ApiException
-
-import certifi
 import collections
 import select
 import ssl
 import time
 
+import certifi
 import six
 import yaml
 
 from six.moves.urllib.parse import urlencode, urlparse, urlunparse
 from six import StringIO
+from six.moves.urllib.parse import quote_plus, urlencode, urlparse, urlunparse
 
-from websocket import WebSocket, ABNF, enableTrace
+from kubernetes.client.rest import ApiException
+from websocket import ABNF, WebSocket, enableTrace
 
 STDIN_CHANNEL = 0
 STDOUT_CHANNEL = 1
@@ -173,7 +173,8 @@ class WSClient:
             elif op_code == ABNF.OPCODE_BINARY or op_code == ABNF.OPCODE_TEXT:
                 data = frame.data
                 if six.PY3:
-                    data = data.decode("utf-8", "replace")
+                    if op_code == ABNF.OPCODE_TEXT:
+                        data = data.decode("utf-8", "replace")
                 if len(data) > 1:
                     channel = ord(data[0])
                     data = data[1:]
