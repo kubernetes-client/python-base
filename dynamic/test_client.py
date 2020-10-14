@@ -81,6 +81,8 @@ class TestDynamicClient(unittest.TestCase):
             changeme_api = client.resources.get(
                 api_version='apps.example.com/v1', kind='ClusterChangeMe')
         except ResourceNotFoundError:
+            # do-not-merge: trigger the e2e test to make sure the failure is
+            # caught by the test
             # Need to wait a sec for the discovery layer to get updated
             time.sleep(2)
         changeme_api = client.resources.get(
