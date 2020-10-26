@@ -29,7 +29,7 @@ import google.auth
 import google.auth.transport.requests
 import oauthlib.oauth2
 import urllib3
-import yaml
+from ruamel import yaml
 from requests_oauthlib import OAuth2Session
 from six import PY3
 

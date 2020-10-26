@@ -23,7 +23,7 @@ import unittest
 from collections import namedtuple
 
 import mock
-import yaml
+from ruamel import yaml
 from six import PY3, next
 
 from kubernetes.client import Configuration
