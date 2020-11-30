@@ -368,31 +368,36 @@ class KubeConfigLoader(object):
         if 'config' not in provider:
             return
 
-        reserved_characters = frozenset(["=", "+", "/"])
+        urlunsafe_revision = {"=":"", "+":"-", "/":"_"} 
         token = provider['config']['id-token']
 
-        if any(char in token for char in reserved_characters):
-            # Invalid jwt, as it contains url-unsafe chars
-            return
+        if any(char in token for char in urlunsafe_revision.keys()):
+            for key, value in urlunsafe_revision.items():
+                token = token.replace(key, value)
 
         parts = token.split('.')
-        if len(parts) != 3:  # Not a valid JWT
-            return
+        if len(parts) != 3:  
+            # Not a valid JWT
+            raise ConfigException(
+                        'Invalid kube-config file. '
+                        'Not a vaild oidc token')
 
         padding = (4 - len(parts[1]) % 4) * '='
         if len(padding) == 3:
             # According to spec, 3 padding characters cannot occur
             # in a valid jwt
             # https://tools.ietf.org/html/rfc7515#appendix-C
-            return
+            raise ConfigException(
+                        'Invalid kube-config file. '
+                        'Not a vaild oidc token')
 
         if PY3:
             jwt_attributes = json.loads(
-                base64.b64decode(parts[1] + padding).decode('utf-8')
+                base64.urlsafe_b64decode(parts[1] + padding).decode('utf-8')
             )
         else:
             jwt_attributes = json.loads(
-                base64.b64decode(parts[1] + padding)
+                base64.urlsafe_b64decode(parts[1] + padding)
             )
 
         expire = jwt_attributes.get('exp')
@@ -416,11 +421,11 @@ class KubeConfigLoader(object):
             ca_cert = tempfile.NamedTemporaryFile(delete=True)
 
             if PY3:
-                cert = base64.b64decode(
+                cert = base64.urlsafe_b64decode(
                     provider['config']['idp-certificate-authority-data']
                 ).decode('utf-8')
             else:
-                cert = base64.b64decode(
+                cert = base64.urlsafe_b64decode(
                     provider['config']['idp-certificate-authority-data'] + "=="
                 )
 
