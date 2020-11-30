@@ -265,11 +265,9 @@ class KubeConfigLoader(object):
 
     def _load_authentication(self):
         """Read authentication from kube-config user section if exists.
-
         This function goes through various authentication methods in user
         section of kube-config and stops if it finds a valid authentication
         method. The order of authentication methods is:
-
             1. auth-provider (gcp, azure, oidc)
             2. token field (point to a token file)
             3. exec provided plugin
@@ -368,31 +366,36 @@ class KubeConfigLoader(object):
         if 'config' not in provider:
             return
 
-        reserved_characters = frozenset(["=", "+", "/"])
+        urlunsafe_revision = {"=":"", "+":"-", "/":"_"} 
         token = provider['config']['id-token']
 
-        if any(char in token for char in reserved_characters):
-            # Invalid jwt, as it contains url-unsafe chars
-            return
+        if any(char in token for char in urlunsafe_revision.keys()):
+            for key, value in urlunsafe_revision.items():
+                token = token.replace(key, value)
 
         parts = token.split('.')
-        if len(parts) != 3:  # Not a valid JWT
-            return
+        if len(parts) != 3:  
+            # Not a valid JWT
+            raise ConfigException(
+                        'Invalid kube-config file. '
+                        'Not a vaild oidc token')
 
         padding = (4 - len(parts[1]) % 4) * '='
         if len(padding) == 3:
             # According to spec, 3 padding characters cannot occur
             # in a valid jwt
             # https://tools.ietf.org/html/rfc7515#appendix-C
-            return
+            raise ConfigException(
+                        'Invalid kube-config file. '
+                        'Not a vaild oidc token')
 
         if PY3:
             jwt_attributes = json.loads(
-                base64.b64decode(parts[1] + padding).decode('utf-8')
+                base64.urlsafe_b64decode(parts[1] + padding).decode('utf-8')
             )
         else:
             jwt_attributes = json.loads(
-                base64.b64decode(parts[1] + padding)
+                base64.urlsafe_b64decode(parts[1] + padding)
             )
 
         expire = jwt_attributes.get('exp')
@@ -416,11 +419,11 @@ class KubeConfigLoader(object):
             ca_cert = tempfile.NamedTemporaryFile(delete=True)
 
             if PY3:
-                cert = base64.b64decode(
+                cert = base64.urlsafe_b64decode(
                     provider['config']['idp-certificate-authority-data']
                 ).decode('utf-8')
             else:
-                cert = base64.b64decode(
+                cert = base64.urlsafe_b64decode(
                     provider['config']['idp-certificate-authority-data'] + "=="
                 )
 
@@ -655,10 +658,8 @@ class KubeConfigMerger:
 
     """Reads and merges configuration from one or more kube-config's.
     The propery `config` can be passed to the KubeConfigLoader as config_dict.
-
     It uses a path attribute from ConfigNode to store the path to kubeconfig.
     This path is required to load certs from relative paths.
-
     A method `save_changes` updates changed kubeconfig's (it compares current
     state of dicts with).
     """
@@ -776,7 +777,6 @@ def load_kube_config(config_file=None, context=None,
                      persist_config=True):
     """Loads authentication and cluster information from kube-config file
     and stores them in kubernetes.client.configuration.
-
     :param config_file: Name of the kube-config file.
     :param context: set the active context. If is set to None, current_context
         from config file will be used.
@@ -806,7 +806,6 @@ def load_kube_config_from_dict(config_dict, context=None,
                                persist_config=True):
     """Loads authentication and cluster information from config_dict file
     and stores them in kubernetes.client.configuration.
-
     :param config_dict: Takes the config file as a dict.
     :param context: set the active context. If is set to None, current_context
         from config file will be used.
