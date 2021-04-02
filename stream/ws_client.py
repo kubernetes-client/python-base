@@ -447,7 +447,8 @@ def create_websocket(configuration, url, headers=None):
     websocket = WebSocket(sslopt=ssl_opts, skip_utf8_validation=False)
     if configuration.proxy:
         proxy_url = urlparse(configuration.proxy)
-        websocket.connect(url, header=header, http_proxy_host=proxy_url.hostname, http_proxy_port=proxy_url.port)
+        websocket.connect(url, header=header, http_proxy_host=proxy_url.hostname, http_proxy_port=proxy_url.port, 
+                          http_proxy_auth=(proxy_url.username, proxy_url.password) if proxy_url.username else None)
     else:
         websocket.connect(url, header=header)
     return websocket
