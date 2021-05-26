@@ -63,8 +63,8 @@ def iter_resp_lines(resp):
             lines = lines[:-1]
         else:
             prev = ""
-        for line in lines:
-            if line:
+        for idx, line in enumerate(lines):
+            if line or idx == 0:
                 yield line
 
 
