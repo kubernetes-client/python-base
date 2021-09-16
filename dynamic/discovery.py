@@ -223,6 +223,7 @@ class LazyDiscoverer(Discoverer):
     def __init__(self, client, cache_file):
         Discoverer.__init__(self, client, cache_file)
         self.__update_cache = False
+        self.__ignore_not_found_error = False
 
     def discover(self):
         self.__resources = self.parse_api_groups(request_resources=False)
@@ -237,9 +238,13 @@ class LazyDiscoverer(Discoverer):
         return self.parse_api_groups(request_resources=False, update=True)['apis'].keys()
 
     def search(self, **kwargs):
+        # In first call, ignore NotFoundError when raised
+        self.__ignore_not_found_error = True
         results = self.__search(self.__build_search(**kwargs), self.__resources, [])
         if not results:
             self.invalidate_cache()
+            # After refresh cache, catch NotFoundError and re-raise
+            self.__ignore_not_found_error = False
             results = self.__search(self.__build_search(**kwargs), self.__resources, [])
         self.__maybe_write_cache()
         return results
@@ -261,7 +266,10 @@ class LazyDiscoverer(Discoverer):
                         resourcePart.resources = self.get_resources_for_api_version(
                             prefix, group, part, resourcePart.preferred)
                     except NotFoundError:
-                        raise ResourceNotFoundError
+                        if not self.__ignore_not_found_error:
+                            raise ResourceNotFoundError
+                        # Set default value when ignore exception
+                        resourcePart.resources = defaultdict(list)
 
                     self._cache['resources'][prefix][group][version] = resourcePart
                     self.__update_cache = True
