@@ -267,20 +267,36 @@ class DynamicClient(object):
         # Authentication setting
         auth_settings = ['BearerToken']
 
-        return self.client.call_api(
-            path,
-            method.upper(),
-            path_params,
-            query_params,
-            header_params,
-            body=body,
-            post_params=form_params,
-            async_req=params.get('async_req'),
-            files=local_var_files,
-            auth_settings=auth_settings,
-            _preload_content=False,
-            _return_http_data_only=params.get('_return_http_data_only', True)
-        )
+        if params.get('async_req'):
+            return self.client.call_api(
+                path,
+                method.upper(),
+                path_params,
+                query_params,
+                header_params,
+                body=body,
+                post_params=form_params,
+                async_req=params.get('async_req'),
+                files=local_var_files,
+                auth_settings=auth_settings,
+                _preload_content=False,
+                _return_http_data_only=params.get('_return_http_data_only', True)
+            ).get()
+        else:
+            return self.client.call_api(
+                path,
+                method.upper(),
+                path_params,
+                query_params,
+                header_params,
+                body=body,
+                post_params=form_params,
+                async_req=params.get('async_req'),
+                files=local_var_files,
+                auth_settings=auth_settings,
+                _preload_content=False,
+                _return_http_data_only=params.get('_return_http_data_only', True)
+            )
 
     def validate(self, definition, version=None, strict=False):
         """validate checks a kubernetes resource definition
