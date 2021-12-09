@@ -282,9 +282,9 @@ class DynamicClient(object):
             _return_http_data_only=params.get('_return_http_data_only', True)
         )
         if params.get('async_req'):
-            api_response.get()
+            return api_response.get()
         else:
-            api_response
+            return api_response
 
     def validate(self, definition, version=None, strict=False):
         """validate checks a kubernetes resource definition
