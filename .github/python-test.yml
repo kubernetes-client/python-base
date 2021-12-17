@@ -1,0 +1,45 @@
+name: Kubernetes Client Python Test
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+        pyver: [ {tox-env: py36, python-version: 3.6}, {tox-env: py36-functional, python-version: 3.6}, 
+            {tox-env: py37, python-version: 3.7}, {tox-env: py37-functional, python-version: 3.7}, 
+            {tox-env: py38, python-version: 3.8}, {tox-env: py38-functional, python-version: 3.8}, 
+            {tox-env: py39, python-version: 3.9}, {tox-env: py39-functional, python-version: 3.9} ]
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.pyver.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.pyver.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install tox tox-gh-actions
+
+    - name: Test with tox Py  ${{ matrix.pyver.python-version }}
+      env: 
+        TOXENV:  ${{ matrix.pyver.tox-env }}
+      run: ./run_tox.sh tox
+          
+  
+  verify:
+    name: Verify Boilerplate
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: Verify boilerplate
+      run: ./hack/verify-boilerplate.sh
