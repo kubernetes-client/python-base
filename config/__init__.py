@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
 
 from os.path import exists, expanduser
 
@@ -20,6 +21,7 @@ from .kube_config import (KUBE_CONFIG_DEFAULT_LOCATION,
                           list_kube_config_contexts, load_kube_config,
                           load_kube_config_from_dict, new_client_from_config, new_client_from_config_dict)
 
+logging.basicConfig(level=logging.INFO)
 
 def load_config(**kwargs):
     """
@@ -36,7 +38,7 @@ def load_config(**kwargs):
     if "kube_config_path" in kwargs.keys() or exists(expanduser(KUBE_CONFIG_DEFAULT_LOCATION)):
         load_kube_config(**kwargs)
     else:
-        print(
+        logging.warning(
             "kube_config_path not provided and "
             "default location ({0}) does not exist. "
             "Using inCluster Config. "
