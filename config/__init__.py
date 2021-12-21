@@ -21,7 +21,6 @@ from .kube_config import (KUBE_CONFIG_DEFAULT_LOCATION,
                           list_kube_config_contexts, load_kube_config,
                           load_kube_config_from_dict, new_client_from_config, new_client_from_config_dict)
 
-logging.basicConfig(level=logging.INFO)
 
 def load_config(**kwargs):
     """
