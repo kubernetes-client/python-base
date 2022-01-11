@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO)
 
 class Config:
     # Validate config, exit if an error is detected
-    def __init__(self, lock, lease_duration, renew_deadline, retry_period, onstarted_leading, onstopped_leading):
+    def __init__(self, lock, lease_duration, renew_deadline, retry_period, onstarted_leading, onstopped_leading, release_on_cancel=False):
         self.jitter_factor = 1.2
 
         if lock is None:
@@ -44,6 +44,7 @@ class Config:
         self.lease_duration = lease_duration
         self.renew_deadline = renew_deadline
         self.retry_period = retry_period
+        self.release_on_cancel = release_on_cancel
 
         if onstarted_leading is None:
             sys.exit("callback onstarted_leading cannot be None")
