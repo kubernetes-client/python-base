@@ -177,9 +177,11 @@ class WSClient:
         #                   implementation.
         # select.poll()   - this will work on most unix based OS, but not as
         #                   efficient as epoll. Will work for fd numbers above 1024.
+        #                   Will not work on Linux when eventlet is being used.
         # select.epoll()  - newest and most efficient way of polling.
         #                   However, only works on linux.
-        if sys.platform.startswith('linux') or sys.platform in ['darwin']:
+        if ((sys.platform.startswith('linux') and getattr(select, "poll", None) is not None) or
+                sys.platform in ['darwin']):
             poll = select.poll()
             poll.register(self.sock.sock, select.POLLIN)
             r = poll.poll(timeout)
